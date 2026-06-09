@@ -1,0 +1,26 @@
+name: ETH Egan Alert
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour (GitHub Actions min reliable = 1h)
+  workflow_dispatch:        # manual trigger anytime
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run ETH alert
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python telegram_alert_eth.py
