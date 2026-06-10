@@ -150,12 +150,21 @@ def get_signal(df: pd.DataFrame) -> dict:
     buy_score = sum([buy_rsi, buy_cross, buy_div])
     sell_score = sum([sell_rsi, sell_cross, sell_div])
 
-    if buy_score >= 2:
+    moderate_buy_ok = rsi <= 35 and trend == "UPTREND"
+    moderate_sell_ok = rsi >= 65 and trend == "DOWNTREND"
+
+    if buy_score == 3:
         signal = "BUY"
-        strength = "STRONG" if buy_score == 3 else "MODERATE"
-    elif sell_score >= 2:
+        strength = "STRONG"
+    elif buy_score == 2 and moderate_buy_ok:
+        signal = "BUY"
+        strength = "MODERATE"
+    elif sell_score == 3:
         signal = "SELL"
-        strength = "STRONG" if sell_score == 3 else "MODERATE"
+        strength = "STRONG"
+    elif sell_score == 2 and moderate_sell_ok:
+        signal = "SELL"
+        strength = "MODERATE"
     else:
         signal = "NEUTRAL"
         strength = "WEAK"
@@ -183,6 +192,35 @@ def get_signal(df: pd.DataFrame) -> dict:
         "tp2_buy": round(price * 1.05, 2),
         "tp1_sell": round(price * 0.975, 2),
         "tp2_sell": round(price * 0.95, 2),
+    }
+
+# ── Futures signal ──────────────────────────────────────────────────────────
+def get_futures_signal(df: pd.DataFrame) -> dict:
+    import numpy as np
+    sig = get_signal(df)
+    entry = sig["price"]
+    # ETH more volatile — use 2.5% as proxy ATR unit
+    atr = entry * 0.025
+
+    if sig["signal"] == "BUY" and sig["strength"] == "STRONG":
+        direction = "LONG"
+        sl = entry - 1.5 * atr
+        tp = entry + 3.0 * atr
+    elif sig["signal"] == "SELL" and sig["strength"] == "STRONG":
+        direction = "SHORT"
+        sl = entry + 1.5 * atr
+        tp = entry - 3.0 * atr
+    else:
+        direction = "NEUTRAL"
+        sl = entry
+        tp = entry
+
+    return {
+        "direction": direction,
+        "entry": round(entry, 2),
+        "sl": round(sl, 2),
+        "tp": round(tp, 2),
+        "atr": round(atr, 2),
     }
 
 # ── Backtest ────────────────────────────────────────────────────────────────
@@ -319,6 +357,7 @@ def main():
     elif args.mode == "json":
         import numpy as np
         sig = get_signal(df)
+        sig["futures"] = get_futures_signal(df)
 
         def convert(obj):
             if isinstance(obj, (np.bool_,)):

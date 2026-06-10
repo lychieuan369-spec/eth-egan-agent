@@ -96,6 +96,22 @@ def format_message(sig: dict, tf_label: str) -> str:
 
     return "\n".join(lines)
 
+def send_futures_alert(futures: dict, symbol: str = "ETH") -> bool:
+    d = futures
+    if d["direction"] == "NEUTRAL":
+        return False
+    emoji = "🟢" if d["direction"] == "LONG" else "🔴"
+    sl_label = "-1.5×ATR" if d["direction"] == "LONG" else "+1.5×ATR"
+    tp_label = "+3×ATR" if d["direction"] == "LONG" else "-3×ATR"
+    text = (
+        f"{emoji} <b>{d['direction']} {symbol}/USDT Perp</b>\n"
+        f"Entry: <b>${d['entry']:,.2f}</b>\n"
+        f"SL: ${d['sl']:,.2f} ({sl_label})\n"
+        f"TP: ${d['tp']:,.2f} ({tp_label})\n"
+        f"RR: 1:2 | ATR: ${d['atr']:,.2f}"
+    )
+    return send_telegram(text)
+
 def main():
     any_signal = False
     for tf, tf_label in TIMEFRAMES:
@@ -105,10 +121,15 @@ def main():
                 msg = format_message(sig, tf_label)
                 ok = send_telegram(msg)
                 status = "✅ sent" if ok else "❌ failed"
-                print(f"[ETH {tf_label}] {sig['signal']} signal → Telegram {status}")
+                print(f"[ETH {tf_label}] {sig['signal']} {sig['strength']} → Telegram {status}")
                 any_signal = True
             else:
                 print(f"[ETH {tf_label}] No signal. RSI={sig['rsi']}, Trend={sig['trend']}")
+            futures = sig.get("futures")
+            if futures and futures["direction"] != "NEUTRAL":
+                ok = send_futures_alert(futures)
+                status = "✅ sent" if ok else "❌ failed"
+                print(f"[ETH {tf_label}] Futures {futures['direction']} → Telegram {status}")
         except Exception as e:
             print(f"[ETH {tf_label}] Error: {e}")
 
