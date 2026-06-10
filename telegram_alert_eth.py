@@ -114,6 +114,8 @@ def main():
 
     if not any_signal:
         print("No ETH signals on any timeframe.")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        send_telegram(f"⚪ <b>ETH Scan — No Signal</b>\n🕐 {now}\nRSI neutral trên 4H + 1H. Chờ setup.")
 
 if __name__ == "__main__":
     main()
