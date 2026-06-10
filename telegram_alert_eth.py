@@ -8,8 +8,8 @@ import requests
 from datetime import datetime, timezone
 import os
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-CHAT_ID = os.environ["CHAT_ID"]
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8639655584:AAGKmEwGKEufCYwItf3v4c7G_P5acacAwQA")
+CHAT_ID = os.environ.get("CHAT_ID", "8842938928")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TIMEFRAMES = [
