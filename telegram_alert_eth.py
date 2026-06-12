@@ -7,9 +7,18 @@ import json
 import requests
 from datetime import datetime, timezone
 import os
+from pathlib import Path
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8639655584:AAGKmEwGKEufCYwItf3v4c7G_P5acacAwQA")
-CHAT_ID = os.environ.get("CHAT_ID", "8842938928")
+# Load .env for local runs
+_env = Path(__file__).parent / ".env"
+if _env.exists():
+    for line in _env.read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+CHAT_ID = os.environ["CHAT_ID"]
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TIMEFRAMES = [
@@ -135,8 +144,6 @@ def main():
 
     if not any_signal:
         print("No ETH signals on any timeframe.")
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        send_telegram(f"⚪ <b>ETH Scan — No Signal</b>\n🕐 {now}\nRSI neutral trên 4H + 1H. Chờ setup.")
 
 if __name__ == "__main__":
     main()
